@@ -1,0 +1,108 @@
+backend code 
+require("dotenv").config();
+const express = require("express");
+const sql = require("mssql");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const bodyParser = require("body-parser");
+const cors = require("cors");
+
+const app = express();
+const PORT = process.env.PORT || 5000;
+
+app.use(cors());
+app.use(bodyParser.json());
+
+// Database Configuration
+const dbConfig = {
+    user: "your_username",
+    password: "your_password",
+    server: "your_server",
+    database: "FlightBookingDB",
+    options: { encrypt: true, trustServerCertificate: true },
+};
+
+// Function to connect to DB
+async function connectDB() {
+    try {
+        await sql.connect(dbConfig);
+        console.log("Connected to SQL Server");
+    } catch (err) {
+        console.error("Database Connection Error:", err);
+    }
+}
+connectDB();
+
+// **USER REGISTRATION**
+app.post("/register", async (req, res) => {
+    const { username, email, password } = req.body;
+    try {
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const query = `INSERT INTO Users (username, email, password) VALUES (@username, @email, @password)`;
+        const request = new sql.Request();
+        request.input("username", sql.VarChar, username);
+        request.input("email", sql.VarChar, email);
+        request.input("password", sql.VarChar, hashedPassword);
+        await request.query(query);
+        res.status(201).json({ message: "User registered successfully" });
+    } catch (error) {
+        res.status(500).json({ error: "Registration failed" });
+    }
+});
+
+// **USER LOGIN**
+app.post("/login", async (req, res) => {
+    const { email, password } = req.body;
+    try {
+        const query = `SELECT * FROM Users WHERE email = @email`;
+        const request = new sql.Request();
+        request.input("email", sql.VarChar, email);
+        const result = await request.query(query);
+        if (result.recordset.length === 0) return res.status(401).json({ error: "User not found" });
+
+        const user = result.recordset[0];
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch) return res.status(401).json({ error: "Invalid credentials" });
+
+        const token = jwt.sign({ userId: user.id, email: user.email }, "SECRET_KEY", { expiresIn: "1h" });
+        res.json({ token, userId: user.id });
+    } catch (error) {
+        res.status(500).json({ error: "Login failed" });
+    }
+});
+
+// **SEARCH FLIGHTS**
+app.get("/flights", async (req, res) => {
+    const { from, to, date } = req.query;
+    try {
+        const query = `SELECT * FROM Flights WHERE departure = @from AND arrival = @to AND date = @date`;
+        const request = new sql.Request();
+        request.input("from", sql.VarChar, from);
+        request.input("to", sql.VarChar, to);
+        request.input("date", sql.Date, date);
+        const result = await request.query(query);
+        res.json(result.recordset);
+    } catch (error) {
+        res.status(500).json({ error: "Flight search failed" });
+    }
+});
+
+// **BOOK A FLIGHT**
+app.post("/book", async (req, res) => {
+    const { userId, flightId } = req.body;
+    try {
+        const query = `INSERT INTO Bookings (userId, flightId) VALUES (@userId, @flightId)`;
+        const request = new sql.Request();
+        request.input("userId", sql.Int, userId);
+        request.input("flightId", sql.Int, flightId);
+        await request.query(query);
+        res.status(201).json({ message: "Flight booked successfully" });
+    } catch (error) {
+        res.status(500).json({ error: "Booking failed" });
+    }
+});
+
+// **START SERVER**
+app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+});
