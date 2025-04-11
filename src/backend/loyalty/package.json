@@ -1,0 +1,42 @@
+{
+  "name": "loyalty",
+  "version": "1.0.0",
+  "description": "Loyalty service to collection airmiles",
+  "dependencies": {
+    "aws-sdk": "^2.642.0",
+    "aws-xray-sdk-core": "^2.5.0",
+    "uuid": "^7.0.2"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.58",
+    "@types/jest": "^26.0.4",
+    "@types/node": "^14.0.20",
+    "@types/uuid": "^7.0.3",
+    "@typescript-eslint/eslint-plugin": "^3.6.1",
+    "@typescript-eslint/parser": "^3.6.1",
+    "aws-sdk-mock": "^5.1.0",
+    "eslint": "^7.4.0",
+    "jest": "^26.1.0",
+    "ts-jest": "^26.1.1",
+    "ts-loader": "^8.0.0",
+    "typescript": "^3.9.6",
+    "webpack": "^4.43.0",
+    "webpack-cli": "^3.3.12"
+  },
+  "scripts": {
+    "test": "jest",
+    "watch": "NODE_ENV=dev webpack --watch --mode=development",
+    "build": "NODE_ENV=prod webpack --mode=production",
+    "lint": "eslint . --ext .ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aws-samples/aws-serverless-airline-booking.git"
+  },
+  "author": "Simon Thulbourn <thulsimo@amazon.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/aws-samples/aws-serverless-airline-booking/issues"
+  },
+  "homepage": "https://github.com/aws-samples/aws-serverless-airline-booking#readme"
+}
